@@ -1,0 +1,6510 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ResumeAI &mdash; Intelligent Resume Ranker</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        :root {
+            --bg: #070910;
+            --sidebar: #0b0e17;
+            --card: #10141f;
+            --card2: #0d111b;
+            --border: rgba(255,255,255,0.08);
+
+            --text: #f4f6fb;
+            --muted: #8d96aa;
+
+            --purple: #8b5cf6;
+            --blue: #3b82f6;
+            --cyan: #22d3ee;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+
+            --shadow:
+                0 20px 60px rgba(0,0,0,0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 80% 0%,
+                    rgba(91, 33, 182, 0.15),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 30% 20%,
+                    rgba(37, 99, 235, 0.08),
+                    transparent 25%
+                ),
+                var(--bg);
+
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        button,
+        input,
+        textarea {
+            font-family: inherit;
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+
+            width: 245px;
+            height: 100vh;
+
+            background: rgba(8, 11, 18, 0.94);
+            border-right: 1px solid var(--border);
+
+            padding: 28px 18px;
+
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            padding: 0 10px;
+            margin-bottom: 42px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 11px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            box-shadow:
+                0 0 25px rgba(139,92,246,0.35);
+
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .brand-name {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-name span {
+            color: var(--purple);
+        }
+
+        .nav-title {
+            color: #60697c;
+            font-size: 10px;
+            font-weight: 700;
+
+            letter-spacing: 1.5px;
+
+            padding: 0 12px;
+            margin-bottom: 12px;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+
+            padding: 12px 13px;
+
+            border-radius: 10px;
+
+            color: var(--muted);
+
+            font-size: 13px;
+            font-weight: 600;
+
+            text-decoration: none;
+
+            transition: 0.2s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.04);
+            color: white;
+        }
+
+        .nav-item.active {
+            color: white;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(139,92,246,0.20),
+                    rgba(59,130,246,0.08)
+                );
+
+            border: 1px solid rgba(139,92,246,0.18);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .sidebar-bottom {
+            position: absolute;
+            bottom: 25px;
+            left: 18px;
+            right: 18px;
+        }
+
+        .system-status {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.025);
+
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+            background: var(--green);
+
+            box-shadow:
+                0 0 10px rgba(34,197,94,0.8);
+        }
+
+        /* =========================
+           MAIN
+        ========================= */
+
+        .main {
+            margin-left: 245px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 72px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 38px;
+
+            border-bottom: 1px solid var(--border);
+
+            background: rgba(7,9,16,0.7);
+
+            backdrop-filter: blur(20px);
+
+            position: sticky;
+            top: 0;
+
+            z-index: 50;
+        }
+
+        .topbar-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .engine-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .engine-status span {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #312e81,
+                    #1d4ed8
+                );
+
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+
+            padding: 38px;
+        }
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero {
+            position: relative;
+
+            min-height: 250px;
+
+            border: 1px solid var(--border);
+            border-radius: 20px;
+
+            overflow: hidden;
+
+            padding: 40px;
+
+            background:
+                radial-gradient(
+                    circle at 85% 50%,
+                    rgba(139,92,246,0.20),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 65% 80%,
+                    rgba(59,130,246,0.12),
+                    transparent 25%
+                ),
+                var(--card);
+
+            box-shadow: var(--shadow);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+
+            opacity: 0.12;
+
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,0.08) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.08) 1px,
+                    transparent 1px
+                );
+
+            background-size: 45px 45px;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+
+            max-width: 680px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            padding: 6px 10px;
+
+            border-radius: 999px;
+
+            border: 1px solid rgba(139,92,246,0.25);
+
+            background: rgba(139,92,246,0.08);
+
+            color: #b9a2ff;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            letter-spacing: 1.2px;
+
+            margin-bottom: 18px;
+        }
+
+        .eyebrow-dot {
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: var(--purple);
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 4vw, 48px);
+
+            line-height: 1.05;
+
+            letter-spacing: -2px;
+
+            margin-bottom: 15px;
+        }
+
+        .hero h1 span {
+            background:
+                linear-gradient(
+                    90deg,
+                    #a78bfa,
+                    #60a5fa,
+                    #22d3ee
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+
+            color: transparent;
+        }
+
+        .hero p {
+            max-width: 600px;
+
+            color: var(--muted);
+
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .ai-orb {
+            position: absolute;
+
+            right: 70px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 145px;
+            height: 145px;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(167,139,250,0.35),
+                    rgba(59,130,246,0.12),
+                    transparent 70%
+                );
+
+            border: 1px solid rgba(139,92,246,0.25);
+
+            box-shadow:
+                0 0 80px rgba(139,92,246,0.20);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-orb::before {
+            content: "";
+
+            width: 75px;
+            height: 75px;
+
+            border-radius: 50%;
+
+            border: 1px solid rgba(167,139,250,0.45);
+
+            box-shadow:
+                inset 0 0 25px rgba(139,92,246,0.25);
+        }
+
+        .orb-text {
+            position: absolute;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            letter-spacing: 1px;
+
+            color: #c4b5fd;
+        }
+
+        /* =========================
+           SECTION
+        ========================= */
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* =========================
+           SCREENING FORM
+        ========================= */
+
+        .screening-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 16px;
+
+            padding: 22px;
+
+            box-shadow:
+                0 12px 40px rgba(0,0,0,0.18);
+        }
+
+        .panel-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 12px;
+        }
+
+        .panel-label strong {
+            font-size: 12px;
+        }
+
+        .panel-label span {
+            color: #657087;
+            font-size: 10px;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
+
+            border: 1px solid var(--border);
+
+            outline: none;
+
+            background: var(--card2);
+
+            color: white;
+
+            border-radius: 10px;
+
+            padding: 14px;
+
+            font-size: 12px;
+
+            transition: 0.2s;
+        }
+
+        textarea {
+            min-height: 165px;
+            resize: vertical;
+
+            line-height: 1.6;
+        }
+
+        textarea:focus,
+        input[type="text"]:focus {
+            border-color: rgba(139,92,246,0.55);
+
+            box-shadow:
+                0 0 0 3px rgba(139,92,246,0.08);
+        }
+
+        textarea::placeholder,
+        input::placeholder {
+            color: #596276;
+        }
+
+        /* =========================
+           UPLOAD
+        ========================= */
+
+        .upload-box {
+            min-height: 165px;
+
+            border: 1px dashed rgba(139,92,246,0.40);
+
+            border-radius: 12px;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(139,92,246,0.08),
+                    transparent 60%
+                );
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            text-align: center;
+
+            padding: 20px;
+
+            cursor: pointer;
+
+            transition: 0.25s;
+        }
+
+        .upload-box:hover {
+            border-color: rgba(139,92,246,0.75);
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(139,92,246,0.13),
+                    transparent 60%
+                );
+        }
+
+        .upload-icon {
+            width: 46px;
+            height: 46px;
+
+            border-radius: 13px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: rgba(139,92,246,0.12);
+
+            font-size: 21px;
+
+            margin-bottom: 12px;
+        }
+
+        .upload-title {
+            font-size: 13px;
+            font-weight: 700;
+
+            margin-bottom: 5px;
+        }
+
+        .upload-subtitle {
+            color: var(--muted);
+            font-size: 10px;
+
+            line-height: 1.5;
+        }
+
+        .file-name {
+            margin-top: 12px;
+
+            color: #a78bfa;
+
+            font-size: 10px;
+
+            max-width: 90%;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* =========================
+           SKILLS
+        ========================= */
+
+        .skills-panel {
+            margin-top: 16px;
+        }
+
+        .skills-help {
+            color: var(--muted);
+
+            font-size: 10px;
+
+            margin-top: 8px;
+        }
+
+        /* =========================
+           BUTTON
+        ========================= */
+
+        .analyze-wrap {
+            margin-top: 16px;
+
+            display: flex;
+
+            justify-content: flex-end;
+        }
+
+        .analyze-btn {
+            border: none;
+
+            cursor: pointer;
+
+            padding: 14px 25px;
+
+            border-radius: 11px;
+
+            color: white;
+
+            font-size: 12px;
+            font-weight: 800;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--purple),
+                    var(--blue)
+                );
+
+            box-shadow:
+                0 12px 30px rgba(99,102,241,0.25);
+
+            transition: 0.2s;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 15px 35px rgba(99,102,241,0.35);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        /* =========================
+           RESULTS
+        ========================= */
+
+        .results-section {
+            margin-top: 35px;
+        }
+
+        .metrics {
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 14px;
+        }
+
+        .metric {
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 14px;
+
+            padding: 19px;
+
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric::after {
+            content: "";
+
+            position: absolute;
+
+            width: 80px;
+            height: 80px;
+
+            right: -30px;
+            bottom: -35px;
+
+            border-radius: 50%;
+
+            background: rgba(139,92,246,0.08);
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--muted);
+
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 27px;
+
+            font-weight: 800;
+
+            letter-spacing: -1px;
+        }
+
+        .metric-note {
+            margin-top: 5px;
+
+            font-size: 9px;
+
+            color: #687286;
+        }
+
+        /* =========================
+           TOP CANDIDATE
+        ========================= */
+
+        .top-grid {
+            display: grid;
+
+            grid-template-columns:
+                1.4fr 0.8fr;
+
+            gap: 16px;
+
+            margin-top: 16px;
+        }
+
+        .candidate-card {
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .candidate-head {
+            display: flex;
+
+            align-items: center;
+
+            gap: 14px;
+
+            margin-bottom: 20px;
+        }
+
+        .candidate-avatar {
+            width: 48px;
+            height: 48px;
+
+            border-radius: 13px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #312e81,
+                    #1e40af
+                );
+
+            font-size: 16px;
+
+            font-weight: 800;
+        }
+
+        .candidate-name {
+            font-size: 14px;
+            font-weight: 700;
+
+            word-break: break-word;
+        }
+
+        .candidate-rank {
+            margin-top: 4px;
+
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .score-layout {
+            display: grid;
+
+            grid-template-columns:
+                160px 1fr;
+
+            align-items: center;
+
+            gap: 28px;
+        }
+
+        .score-circle {
+            width: 145px;
+            height: 145px;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            position: relative;
+
+            background:
+                conic-gradient(
+                    var(--purple) calc(var(--score) * 1%),
+                    #1d2330 0
+                );
+        }
+
+        .score-circle::before {
+            content: "";
+
+            position: absolute;
+
+            width: 112px;
+            height: 112px;
+
+            border-radius: 50%;
+
+            background: var(--card);
+        }
+
+        .score-number {
+            position: relative;
+
+            z-index: 2;
+
+            text-align: center;
+        }
+
+        .score-number strong {
+            display: block;
+
+            font-size: 31px;
+            font-weight: 800;
+        }
+
+        .score-number span {
+            color: var(--muted);
+
+            font-size: 9px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+        }
+
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+
+            gap: 12px;
+        }
+
+        .break-row {
+            display: flex;
+            justify-content: space-between;
+
+            font-size: 11px;
+        }
+
+        .break-label {
+            color: var(--muted);
+        }
+
+        .break-value {
+            font-weight: 700;
+        }
+
+        .progress {
+            height: 5px;
+
+            background: #1c2230;
+
+            border-radius: 10px;
+
+            margin-top: 7px;
+
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+
+            border-radius: inherit;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--purple),
+                    var(--blue)
+                );
+        }
+
+        /* =========================
+           RECOMMENDATION
+        ========================= */
+
+        .recommendation-panel {
+            position: relative;
+
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    circle at 100% 0,
+                    rgba(139,92,246,0.13),
+                    transparent 45%
+                ),
+                var(--card);
+        }
+
+        .panel-kicker {
+            font-size: 9px;
+
+            letter-spacing: 1.4px;
+
+            font-weight: 800;
+
+            color: #8e7bbf;
+        }
+
+        .recommendation-icon {
+            width: 43px;
+            height: 43px;
+
+            margin-top: 20px;
+
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(139,92,246,0.18),
+                    rgba(59,130,246,0.10)
+                );
+
+            border: 1px solid rgba(139,92,246,0.22);
+
+            font-size: 20px;
+
+            color: #c4b5fd;
+        }
+
+        .recommendation-panel h3 {
+            margin-top: 18px;
+
+            font-size: 21px;
+
+            letter-spacing: -0.5px;
+        }
+
+        .recommendation-panel > p {
+            margin-top: 10px;
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            line-height: 1.7;
+        }
+
+        .recommendation-status {
+            display: inline-flex;
+
+            margin-top: 17px;
+
+            padding: 7px 10px;
+
+            border-radius: 999px;
+
+            font-size: 9px;
+
+            font-weight: 800;
+
+            color: #c4b5fd;
+
+            background: rgba(139,92,246,0.10);
+
+            border: 1px solid rgba(139,92,246,0.20);
+        }
+
+        .recommendation-message {
+            font-size: 10px !important;
+        }
+
+        /* =========================
+           JD ANALYSIS PANEL
+        ========================= */
+
+        .jd-analysis-panel {
+            margin-top: 16px;
+            padding: 22px;
+        }
+
+        .jd-analysis-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .jd-analysis-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .jd-analysis-subtitle {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .jd-analysis-stats {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .jd-stat {
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 9px;
+            color: #c4b5fd;
+            background: rgba(139,92,246,0.10);
+            border: 1px solid rgba(139,92,246,0.20);
+            white-space: nowrap;
+        }
+
+        .jd-analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .jd-analysis-card {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.018);
+            border: 1px solid var(--border);
+        }
+
+        .jd-analysis-card-title {
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .jd-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .jd-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 9px;
+            border-radius: 7px;
+            font-size: 9px;
+            line-height: 1;
+            color: #a7f3d0;
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.16);
+        }
+
+        .jd-tag.keyword {
+            color: #c4b5fd;
+            background: rgba(139,92,246,0.08);
+            border-color: rgba(139,92,246,0.16);
+        }
+
+        .jd-empty {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 760px) {
+            .jd-analysis-header {
+                flex-direction: column;
+            }
+
+            .jd-analysis-stats {
+                justify-content: flex-start;
+            }
+
+            .jd-analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        /* =========================
+           SKILL GAP ANALYSIS PANEL
+        ========================= */
+
+        .skill-gap-panel {
+            margin-top: 16px;
+            padding: 22px;
+        }
+
+        .skill-gap-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .skill-gap-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .skill-gap-subtitle {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .skill-gap-candidate {
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 9px;
+            color: #c4b5fd;
+            background: rgba(139,92,246,0.10);
+            border: 1px solid rgba(139,92,246,0.20);
+            white-space: nowrap;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .skill-gap-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .skill-gap-card {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.018);
+            border: 1px solid var(--border);
+        }
+
+        .skill-gap-card-title {
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .skill-gap-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .gap-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 9px;
+            border-radius: 7px;
+            font-size: 9px;
+            line-height: 1;
+            color: #fecaca;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.16);
+        }
+
+        .gap-tag.partial {
+            color: #fde68a;
+            background: rgba(245,158,11,0.08);
+            border-color: rgba(245,158,11,0.16);
+        }
+
+        .skill-gap-suggestion {
+            font-size: 10px;
+            line-height: 1.6;
+            color: var(--muted);
+            margin: 0 0 8px;
+        }
+
+        .skill-gap-success {
+            font-size: 10px;
+            line-height: 1.6;
+            color: #a7f3d0;
+            margin: 0;
+        }
+
+        @media (max-width: 760px) {
+            .skill-gap-header {
+                flex-direction: column;
+            }
+
+            .skill-gap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* =========================
+           RANKING TABLE
+        ========================= */
+
+        .ranking-panel {
+            margin-top: 16px;
+
+            padding: 0;
+
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px 22px;
+
+            border-bottom: 1px solid var(--border);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+        }
+
+        .table-title {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .table-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            flex-wrap: wrap;
+
+            justify-content: flex-end;
+        }
+
+        .table-badge {
+            font-size: 9px;
+
+            padding: 6px 9px;
+
+            border-radius: 7px;
+
+            background: rgba(34,197,94,0.08);
+
+            color: #86efac;
+
+            border: 1px solid rgba(34,197,94,0.15);
+        }
+
+        /* =========================
+           REPORT BUTTONS
+        ========================= */
+
+        .report-btn {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 6px;
+
+            padding: 8px 12px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            color: #ffffff;
+
+            border: 1px solid rgba(139,92,246,0.25);
+
+            background:
+                rgba(139,92,246,0.10);
+
+            transition: all 0.2s ease;
+
+            cursor: pointer;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-2px);
+
+            background:
+                rgba(139,92,246,0.20);
+
+            border-color:
+                rgba(139,92,246,0.45);
+
+            box-shadow:
+                0 5px 18px rgba(0,0,0,0.2);
+        }
+
+        .report-btn.csv {
+            color: #86efac;
+
+            border-color:
+                rgba(34,197,94,0.20);
+
+            background:
+                rgba(34,197,94,0.07);
+        }
+
+        .report-btn.csv:hover {
+            background:
+                rgba(34,197,94,0.14);
+
+            border-color:
+                rgba(34,197,94,0.35);
+        }
+
+        .report-btn.pdf {
+            color: #fca5a5;
+
+            border-color:
+                rgba(239,68,68,0.20);
+
+            background:
+                rgba(239,68,68,0.07);
+        }
+
+        .report-btn.pdf:hover {
+            background:
+                rgba(239,68,68,0.14);
+
+            border-color:
+                rgba(239,68,68,0.35);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 720px;
+        }
+
+        th {
+            padding: 13px 20px;
+
+            text-align: left;
+
+            font-size: 9px;
+
+            color: #626c80;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.8px;
+
+            background: rgba(255,255,255,0.015);
+        }
+
+        td {
+            padding: 15px 20px;
+
+            border-top: 1px solid rgba(255,255,255,0.05);
+
+            font-size: 11px;
+
+            color: #cbd2df;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.018);
+        }
+
+        .rank-number {
+            font-weight: 800;
+            color: white;
+        }
+
+        .resume-name {
+            color: white;
+            font-weight: 600;
+        }
+
+        .score-pill {
+            display: inline-block;
+
+            padding: 5px 8px;
+
+            border-radius: 7px;
+
+            background: rgba(139,92,246,0.10);
+
+            color: #c4b5fd;
+
+            font-weight: 700;
+
+            font-size: 10px;
+        }
+
+        .match-pill {
+            display: inline-block;
+
+            padding: 5px 8px;
+
+            border-radius: 7px;
+
+            font-size: 9px;
+
+            font-weight: 700;
+        }
+
+        .match-strong {
+            color: #86efac;
+            background: rgba(34,197,94,0.08);
+        }
+
+        .match-good {
+            color: #93c5fd;
+            background: rgba(59,130,246,0.08);
+        }
+
+        .match-moderate {
+            color: #fcd34d;
+            background: rgba(245,158,11,0.08);
+        }
+
+        .match-weak {
+            color: #fca5a5;
+            background: rgba(239,68,68,0.08);
+        }
+
+        /* =========================
+           SKILL ANALYSIS
+        ========================= */
+
+        .skill-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
+            gap: 16px;
+
+            margin-top: 16px;
+        }
+
+        .skill-grid .panel {
+            min-width: 0;
+        }
+
+        .skill-section-title {
+            font-size: 11px;
+            font-weight: 700;
+
+            margin-bottom: 13px;
+        }
+
+        .skill-tags {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+        }
+
+        .skill-tag {
+            padding: 7px 9px;
+
+            border-radius: 7px;
+
+            font-size: 9px;
+
+            border: 1px solid var(--border);
+
+            background: rgba(255,255,255,0.025);
+
+            color: #cdd4e1;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            white-space: nowrap;
+        }
+
+        .skill-tag.matched {
+            color: #86efac;
+
+            border-color: rgba(34,197,94,0.18);
+
+            background: rgba(34,197,94,0.06);
+        }
+
+        .skill-tag.missing {
+            color: #fca5a5;
+
+            border-color: rgba(239,68,68,0.18);
+
+            background: rgba(239,68,68,0.06);
+        }
+
+        .skill-tag.partial {
+            color: #fbbf24;
+
+            border-color: rgba(245,158,11,0.25);
+
+            background: rgba(245,158,11,0.07);
+        }
+
+        /* =========================
+           CANDIDATE ROW
+        ========================= */
+
+        .candidate-row {
+            cursor: pointer;
+            transition: background 0.18s, transform 0.18s;
+        }
+
+        .candidate-row:hover {
+            background: rgba(139,92,246,0.055);
+        }
+
+        .candidate-row:hover .resume-name {
+            color: #c4b5fd;
+        }
+
+        /* =========================
+           CANDIDATE MODAL
+        ========================= */
+
+        .candidate-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+        }
+
+        .candidate-modal.open {
+            display: flex;
+        }
+
+        .candidate-modal-box {
+            width: min(900px, 95vw);
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #10131d;
+            border: 1px solid rgba(139,92,246,0.25);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.55);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.05);
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .modal-kicker {
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: #9b7cff;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-candidate-name {
+            padding-right: 45px;
+            color: #ffffff;
+            font-size: 21px;
+            word-break: break-word;
+        }
+
+        .modal-candidate-rank {
+            margin-top: 6px;
+            color: #7f8aa3;
+            font-size: 12px;
+        }
+
+        .modal-score-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        .modal-score-card {
+            padding: 15px;
+        }
+
+        .modal-score-label {
+            font-size: 10px;
+            color: #7f8aa3;
+        }
+
+        .modal-score-value {
+            display: block;
+            margin-top: 7px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .modal-final-card {
+            border-color: rgba(139,92,246,0.25);
+        }
+
+        .modal-final-card .modal-score-label {
+            color: #9b7cff;
+        }
+
+        .modal-recommendation {
+            margin-bottom: 20px;
+            padding: 18px;
+        }
+
+        .modal-recommendation-label {
+            font-size: 10px;
+            color: #7f8aa3;
+            margin-bottom: 8px;
+        }
+
+        .modal-recommendation-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .modal-recommendation-message {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #8c96aa;
+        }
+
+        .modal-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .modal-skill-card {
+            padding: 18px;
+        }
+
+        .modal-skill-title {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+         /* =========================
+   MODAL IMPROVEMENT SUGGESTIONS
+========================= */
+
+.modal-improvement-card {
+    margin-top: 16px;
+    padding: 18px;
+}
+
+/* =========================
+   SCORE BREAKDOWN
+========================= */
+
+.modal-score-breakdown {
+    margin-top: 16px;
+    padding: 18px;
+}
+
+.score-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.score-breakdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+}
+
+.score-breakdown-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.score-breakdown-info span {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.score-breakdown-info small {
+    font-size: 9px;
+    color: var(--muted);
+}
+
+.score-breakdown-bar {
+    width: 100%;
+    height: 5px;
+    margin-top: 7px;
+
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.score-breakdown-fill {
+    width: 0%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        #7c3aed,
+        #a78bfa
+    );
+
+    border-radius: 999px;
+
+    transition: width 0.4s ease;
+}
+
+
+.score-breakdown-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.score-breakdown-value span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.score-breakdown-value small {
+    font-size: 9px;
+    color: var(--muted);
+}
+
+.score-breakdown-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding: 13px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.score-breakdown-total div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.score-breakdown-total span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.score-breakdown-total small {
+    font-size: 9px;
+    color: var(--muted);
+}
+
+.score-breakdown-total strong {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.modal-improvement-text {
+    margin: 0 0 9px;
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.modal-improvement-text:last-child {
+    margin-bottom: 0;
+}   
+      
+        /* =========================
+           CANDIDATE SEARCH & FILTERS
+        ========================= */
+
+        .candidate-filters {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.012);
+        }
+
+        .candidate-search {
+            min-width: 230px;
+            flex: 1 1 260px;
+            height: 36px;
+            padding: 9px 12px !important;
+            font-size: 10px !important;
+        }
+
+        .candidate-filter {
+            width: auto;
+            min-width: 145px;
+            height: 36px;
+            padding: 8px 11px !important;
+            font-size: 10px !important;
+            cursor: pointer;
+        }
+
+        .candidate-count {
+            margin-left: auto;
+            color: var(--muted);
+            font-size: 9px;
+            white-space: nowrap;
+        }
+
+        .candidate-row.hidden-row {
+            display: none;
+        }
+
+        /* =========================
+           RESUME ANALYTICS
+        ========================= */
+
+        .analytics-panel {
+            margin-top: 18px;
+        }
+
+        .analytics-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .analytics-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .analytics-subtitle {
+            margin-top: 5px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .analytics-stat {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.018);
+        }
+
+        .analytics-stat-label {
+            font-size: 9px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .analytics-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .analytics-stat-value small {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .analytics-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .analytics-card {
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.018);
+        }
+
+        .analytics-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .analytics-bar-row {
+            display: grid;
+            grid-template-columns: 105px 1fr 28px;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 11px;
+        }
+
+        .analytics-bar-label {
+            font-size: 9px;
+            color: var(--muted);
+        }
+
+        .analytics-bar-track {
+            height: 7px;
+            border-radius: 99px;
+            background: #1c2332;
+            overflow: hidden;
+        }
+
+        .analytics-bar-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #7654ff, #3f8cff);
+            min-width: 0;
+        }
+
+        .analytics-bar-count {
+            text-align: right;
+            font-size: 9px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .analytics-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .analytics-header {
+                flex-direction: column;
+            }
+
+            .analytics-bar-row {
+                grid-template-columns: 90px 1fr 24px;
+            }
+        }
+
+        /* =========================
+           EMPTY STATE
+        ========================= */
+
+        .empty-state {
+            margin-top: 25px;
+
+            padding: 45px 20px;
+
+            text-align: center;
+
+            border: 1px dashed var(--border);
+
+            border-radius: 16px;
+
+            color: var(--muted);
+        }
+
+        .empty-icon {
+            font-size: 30px;
+
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            color: white;
+
+            font-size: 15px;
+
+            margin-bottom: 7px;
+        }
+
+        .empty-state p {
+            font-size: 11px;
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        footer {
+            padding: 35px 0 15px;
+
+            text-align: center;
+
+            color: #4f586b;
+
+            font-size: 9px;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1100px) {
+
+            .ai-orb {
+                right: 30px;
+                opacity: 0.55;
+            }
+
+            .metrics {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+        }
+
+        @media (max-width: 850px) {
+
+            .sidebar {
+                width: 70px;
+
+                padding: 20px 10px;
+            }
+
+            .brand-name,
+            .nav-title,
+            .nav-item span:not(.nav-icon),
+            .sidebar-bottom {
+                display: none;
+            }
+
+            .brand {
+                justify-content: center;
+                padding: 0;
+            }
+
+            .nav-item {
+                justify-content: center;
+            }
+
+            .main {
+                margin-left: 70px;
+            }
+
+            .container {
+                padding: 25px;
+            }
+
+            .screening-grid,
+            .top-grid,
+            .skill-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-orb {
+                display: none;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .topbar {
+                padding: 0 18px;
+            }
+
+            .topbar-title {
+                display: none;
+            }
+
+            .container {
+                padding: 18px;
+            }
+
+            .hero {
+                padding: 28px 22px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .score-layout {
+                grid-template-columns: 1fr;
+
+                justify-items: center;
+            }
+
+            .score-breakdown {
+                width: 100%;
+            }
+
+            .analyze-wrap {
+                justify-content: stretch;
+            }
+
+            .analyze-btn {
+                width: 100%;
+            }
+
+            .table-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .table-header-right {
+                justify-content: flex-start;
+            }
+
+            .report-btn {
+                padding: 8px 11px;
+            }
+
+        }
+
+    
+        /* =========================
+           MODAL RESPONSIVE
+        ========================= */
+
+        @media (max-width: 900px) {
+
+            .modal-score-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .modal-skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .candidate-modal {
+                padding: 12px;
+            }
+
+            .candidate-modal-box {
+                padding: 20px;
+                max-height: 94vh;
+            }
+
+            .modal-score-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+        }
+        
+   /* =========================
+   PREMIUM CANDIDATE FILTERS
+========================= */
+
+.candidate-filter {
+    height: 40px;
+    min-width: 170px;
+    padding: 0 38px 0 14px;
+
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 10px;
+
+    background-color: #111522;
+    color: #e8eaf2;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    outline: none;
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239b8cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    background-size: 12px;
+}
+
+
+/* Hover */
+
+.candidate-filter:hover {
+    border-color: rgba(139, 92, 246, 0.55);
+    background-color: #151a2a;
+}
+
+
+/* Focus */
+
+.candidate-filter:focus {
+    border-color: rgba(139, 92, 246, 0.85);
+
+    box-shadow:
+        0 0 0 3px rgba(139, 92, 246, 0.12);
+
+    background-color: #151a2a;
+}
+
+
+/* Dropdown options */
+
+.candidate-filter option {
+    background-color: #111522;
+    color: #e8eaf2;
+    font-size: 12px;
+}
+
+
+/* Search + filters alignment */
+
+.candidate-search {
+    height: 40px;
+}
+
+
+
+/* =========================
+   CANDIDATE COMPARISON
+========================= */
+
+.candidate-comparison-selector {
+    margin: 16px 0;
+    padding: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.18);
+    border-radius: 12px;
+    background: rgba(17, 21, 34, 0.72);
+}
+
+.comparison-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.comparison-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e8eaf2;
+}
+
+.comparison-subtitle {
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.comparison-count {
+    padding: 6px 10px;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 999px;
+    background: rgba(124, 58, 237, 0.08);
+    color: #c4b5fd;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.comparison-candidates {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.comparison-option {
+    display: block;
+    cursor: pointer;
+}
+
+.comparison-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.comparison-option-content {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 48px;
+    padding: 10px 12px;
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9px;
+
+    background: rgba(255, 255, 255, 0.025);
+
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.comparison-option:hover .comparison-option-content {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.06);
+    transform: translateY(-1px);
+}
+
+.comparison-checkbox:checked + .comparison-option-content {
+    border-color: rgba(139, 92, 246, 0.75);
+    background: rgba(124, 58, 237, 0.12);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12);
+}
+
+.comparison-option-rank {
+    font-size: 10px;
+    font-weight: 700;
+    color: #a78bfa;
+    min-width: 24px;
+}
+
+.comparison-option-identity {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+
+.comparison-option-name {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 11px;
+    font-weight: 700;
+    color: #e8eaf2;
+}
+
+.comparison-option-email {
+    flex: 1;
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 9px;
+    font-weight: 500;
+    color: #8f95a8;
+}
+
+.comparison-option-score {
+    font-size: 11px;
+    font-weight: 800;
+    color: #c4b5fd;
+}
+
+.compare-candidates-btn {
+    margin-top: 14px;
+    height: 38px;
+    padding: 0 16px;
+
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 9px;
+
+    background: linear-gradient(
+        135deg,
+        #6d28d9,
+        #7c3aed
+    );
+
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.compare-candidates-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.22);
+}
+
+.compare-candidates-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+
+    .comparison-candidates {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-selector-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+
+/* =========================
+   CANDIDATE COMPARISON PANEL
+========================= */
+
+.candidate-comparison-panel {
+    margin: 18px 0;
+    padding: 20px;
+
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18, 22, 36, 0.98),
+            rgba(13, 16, 27, 0.98)
+        );
+
+    box-shadow:
+        0 14px 35px rgba(0, 0, 0, 0.18);
+
+    animation: comparisonPanelIn 0.25s ease;
+}
+
+@keyframes comparisonPanelIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+.comparison-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+
+.comparison-panel-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #f1f2f7;
+}
+
+
+.comparison-panel-subtitle {
+    margin-top: 5px;
+
+    font-size: 10px;
+    color: var(--muted);
+}
+
+
+.comparison-close-btn {
+    height: 34px;
+    padding: 0 12px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+
+    background: rgba(255, 255, 255, 0.035);
+    color: #bfc3d1;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+
+.comparison-close-btn:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.30);
+    color: #fca5a5;
+}
+
+
+/* =========================
+   COMPARISON TABLE
+========================= */
+
+.comparison-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+.comparison-table {
+    width: 100%;
+    min-width: 720px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    font-size: 11px;
+}
+
+
+.comparison-table th,
+.comparison-table td {
+    padding: 12px 14px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    text-align: left;
+    vertical-align: top;
+}
+
+
+.comparison-table th {
+    background: rgba(255, 255, 255, 0.025);
+
+    color: #8f96a8;
+
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+
+.comparison-table th:first-child {
+    width: 150px;
+}
+
+
+.comparison-table td:first-child {
+    color: #aeb4c3;
+    font-weight: 600;
+}
+
+
+.comparison-table tbody tr:hover td {
+    background: rgba(139, 92, 246, 0.025);
+}
+
+
+/* =========================
+   CANDIDATE HEADER
+========================= */
+
+.comparison-candidate-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+
+.comparison-candidate-rank {
+    font-size: 9px;
+    font-weight: 700;
+    color: #a78bfa;
+}
+
+
+.comparison-candidate-name {
+    max-width: 190px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #eef0f6;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+.comparison-candidate-recommendation {
+    font-size: 9px;
+    color: var(--muted);
+}
+
+
+/* =========================
+   SCORE VALUES
+========================= */
+
+.comparison-score {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+
+.comparison-score-value {
+    font-size: 12px;
+    font-weight: 800;
+    color: #e8eaf2;
+}
+
+
+.comparison-score-bar {
+    width: 100%;
+    height: 5px;
+
+    overflow: hidden;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.07);
+}
+
+
+.comparison-score-fill {
+    width: 0%;
+
+    height: 100%;
+
+    border-radius: 999px;
+
+    background: linear-gradient(
+        90deg,
+        #7c3aed,
+        #a78bfa
+    );
+
+    transition: width 0.45s ease;
+}
+
+
+/* =========================
+   OVERALL SCORE
+========================= */
+
+.comparison-overall-score {
+    font-size: 16px;
+    font-weight: 900;
+    color: #c4b5fd;
+}
+
+
+.comparison-overall-cell {
+    background: rgba(124, 58, 237, 0.045);
+}
+
+
+/* =========================
+   SKILL TAGS
+========================= */
+
+.comparison-skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+
+.comparison-skill-tag {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
+
+    font-size: 9px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+.comparison-skill-tag.matched {
+    border: 1px solid rgba(34, 197, 94, 0.18);
+    background: rgba(34, 197, 94, 0.08);
+    color: #86efac;
+}
+
+
+.comparison-skill-tag.partial {
+    border: 1px solid rgba(234, 179, 8, 0.18);
+    background: rgba(234, 179, 8, 0.08);
+    color: #fde68a;
+}
+
+
+.comparison-skill-tag.missing {
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    background: rgba(239, 68, 68, 0.08);
+    color: #fca5a5;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+
+    .candidate-comparison-panel {
+        padding: 14px;
+    }
+
+    .comparison-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .comparison-close-btn {
+        align-self: flex-end;
+    }
+
+}
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+
+        <div class="brand-logo">
+            R
+        </div>
+
+        <div class="brand-name">
+            Resume<span>AI</span>
+        </div>
+
+    </div>
+
+
+    <div class="nav-title">
+        WORKSPACE
+    </div>
+
+
+    <nav class="nav">
+
+        <a href="#dashboard" class="nav-item active">
+
+            <span class="nav-icon">
+                &#8962;
+            </span>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <a href="#screening" class="nav-item">
+
+            <span class="nav-icon">
+                &#9678;
+            </span>
+
+            <span>
+                Screen Resumes
+            </span>
+
+        </a>
+
+
+        <a href="#ranking" class="nav-item">
+
+            <span class="nav-icon">
+                &#8597;
+            </span>
+
+            <span>
+                Candidate Ranking
+            </span>
+
+        </a>
+
+
+        <a href="#skills" class="nav-item">
+
+            <span class="nav-icon">
+                &#9671;
+            </span>
+
+            <span>
+                Skill Analysis
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <div
+        class="nav-title"
+        style="margin-top:28px;"
+    >
+        SYSTEM
+    </div>
+
+
+    <nav class="nav">
+
+        <a href="#reports" class="nav-item">
+
+            <span class="nav-icon">
+                &#9633;
+            </span>
+
+            <span>
+                Reports
+            </span>
+
+        </a>
+
+
+        <a href="#" class="nav-item">
+
+            <span class="nav-icon">
+                &#9881;
+            </span>
+
+            <span>
+                Settings
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <div class="system-status">
+
+            <div class="status-row">
+
+                <span class="status-dot"></span>
+
+                AI Engine Online
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="main">
+
+
+    <header class="topbar">
+
+        <div class="topbar-title">
+            Intelligent Candidate Screening Platform
+        </div>
+
+
+        <div class="topbar-right">
+
+            <div class="engine-status">
+
+                <span></span>
+
+                AI Engine Active
+
+            </div>
+
+
+            <div class="avatar">
+                AI
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <div class="container">
+
+
+        <!-- =========================
+             HERO
+        ========================= -->
+
+        <section class="hero">
+
+            <div class="hero-grid"></div>
+
+
+            <div class="hero-content">
+
+                <div class="eyebrow">
+
+                    <span class="eyebrow-dot"></span>
+
+                    AI-POWERED RESUME INTELLIGENCE
+
+                </div>
+
+
+                <h1>
+
+                    Find the right
+
+                    <span>
+                        candidate faster.
+                    </span>
+
+                </h1>
+
+
+                <p>
+
+                    Upload multiple resumes, define the job requirements,
+                    and let the AI engine analyze relevance, skills and
+                    overall candidate fit automatically.
+
+                </p>
+
+            </div>
+
+
+            <div class="ai-orb">
+
+                <div class="orb-text">
+                    AI
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             SCREENING
+        ========================= -->
+
+        <section
+            class="section"
+            id="screening"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <div class="section-title">
+                        Start Candidate Screening
+                    </div>
+
+                    <div class="section-subtitle">
+                        Configure the role and upload candidate resumes
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <form
+                action="/rank"
+                method="POST"
+                enctype="multipart/form-data"
+                id="rankForm"
+            >
+
+
+                <div class="screening-grid">
+
+
+                    <!-- RESUME UPLOAD -->
+
+                    <div class="panel">
+
+                        <div class="panel-label">
+
+                            <strong>
+                                Candidate Resumes
+                            </strong>
+
+                            <span>
+                                PDF only
+                            </span>
+
+                        </div>
+
+
+                        <label
+                            for="resumeInput"
+                            class="upload-box"
+                        >
+
+                            <div class="upload-icon">
+                                &#8593;
+                            </div>
+
+
+                            <div class="upload-title">
+                                Upload resumes
+                            </div>
+
+
+                            <div class="upload-subtitle">
+
+                                Drop multiple PDF resumes here
+                                <br>
+                                or click to browse files
+
+                            </div>
+
+
+                            <div
+                                class="file-name"
+                                id="fileName"
+                            >
+                                No files selected
+                            </div>
+
+                        </label>
+
+
+                        <input
+                            type="file"
+                            id="resumeInput"
+                            name="resumes"
+                            accept=".pdf"
+                            multiple
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- JOB DESCRIPTION -->
+
+                    <div class="panel">
+
+                        <div class="panel-label">
+
+                            <strong>
+                                Job Description
+                            </strong>
+
+                            <span>
+                                Required
+                            </span>
+
+                        </div>
+
+
+                        <textarea
+                            name="job_description"
+                            id="jobDescription"
+                            placeholder="Example:
+
+We are looking for a Python Developer Intern.
+
+The candidate should have knowledge of Python,
+Flask, SQL, Machine Learning, Git and REST APIs.
+
+Responsibilities include developing backend applications,
+working with databases and building machine learning solutions."
+                            required
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- REQUIRED SKILLS -->
+
+                <div class="panel skills-panel">
+
+                    <div class="panel-label">
+
+                        <strong>
+                            Required Skills
+                        </strong>
+
+                        <span>
+                            Comma separated
+                        </span>
+
+                    </div>
+
+
+                    <input
+                        type="text"
+                        name="required_skills"
+                        id="requiredSkills"
+                        placeholder="Python, Flask, SQL, Machine Learning, Git, REST API"
+                    >
+
+
+                    <div class="skills-help">
+
+                        Enter the most important skills from the job description.
+                        The AI engine will compare them against each resume.
+
+                    </div>
+
+                </div>
+
+
+                <!-- ANALYZE BUTTON -->
+
+                <div class="analyze-wrap">
+
+                    <button
+                        type="submit"
+                        class="analyze-btn"
+                        id="analyzeButton"
+                    >
+
+                        &#10022; Analyze Candidates
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        {% if result and results %}
+
+
+        <!-- =========================
+             RESULTS
+        ========================= -->
+
+        <section class="results-section" id="dashboard">
+
+
+            <div class="section-header">
+
+                <div>
+
+                    <div class="section-title">
+                        Screening Results
+                    </div>
+
+                    <div class="section-subtitle">
+                        AI-generated candidate analysis
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 METRICS
+            ========================= -->
+
+            <div class="metrics">
+
+
+                <div class="metric">
+
+                    <div class="metric-label">
+                        RESUMES ANALYZED
+                    </div>
+
+                    <div class="metric-value">
+                        {{ results|length }}
+                    </div>
+
+                    <div class="metric-note">
+                        Candidate documents processed
+                    </div>
+
+                </div>
+
+
+                <div class="metric">
+
+                    <div class="metric-label">
+                        TOP AI SCORE
+                    </div>
+
+                    <div class="metric-value">
+                        {{ results[0].final_score }}%
+                    </div>
+
+                    <div class="metric-note">
+                        Highest overall candidate fit
+                    </div>
+
+                </div>
+
+
+                <div class="metric">
+
+                    <div class="metric-label">
+                        JD SIMILARITY
+                    </div>
+
+                    <div class="metric-value">
+                        {{ results[0].similarity }}%
+                    </div>
+
+                    <div class="metric-note">
+                        TF-IDF + cosine similarity
+                    </div>
+
+                </div>
+
+
+                <div class="metric">
+
+                    <div class="metric-label">
+                        SKILL MATCH
+                    </div>
+
+                    <div class="metric-value">
+                        {{ results[0].skill_score }}%
+                    </div>
+
+                    <div class="metric-note">
+                        Required skill coverage
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 TOP CANDIDATE
+            ========================= -->
+
+            <div class="top-grid">
+
+
+                <div class="panel candidate-card">
+
+
+                    <div class="candidate-head">
+
+                        <div class="candidate-avatar">
+                            #1
+                        </div>
+
+
+                        <div>
+
+                            <div class="candidate-name">
+                                {{ results[0].filename }}
+                            </div>
+
+                            <div class="candidate-rank">
+                                Highest ranked candidate
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="score-layout">
+
+
+                        <div
+                            class="score-circle"
+                            style="--score: {{ results[0].final_score }}"
+                        >
+
+                            <div class="score-number">
+
+                                <strong>
+                                    {{ results[0].final_score }}
+                                </strong>
+
+                                <span>
+                                    AI Score
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =========================
+                             4-SCORE BREAKDOWN
+                        ========================= -->
+
+                        <div class="score-breakdown">
+
+
+                            <!-- JD SIMILARITY -->
+
+                            <div>
+
+                                <div class="break-row">
+
+                                    <span class="break-label">
+                                        JD Similarity
+                                    </span>
+
+                                    <span class="break-value">
+                                        {{ results[0].similarity }}%
+                                    </span>
+
+                                </div>
+
+
+                                <div class="progress">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: {{ results[0].similarity }}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- SKILL MATCH -->
+
+                            <div>
+
+                                <div class="break-row">
+
+                                    <span class="break-label">
+                                        Required Skills
+                                    </span>
+
+                                    <span class="break-value">
+                                        {{ results[0].skill_score }}%
+                                    </span>
+
+                                </div>
+
+
+                                <div class="progress">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: {{ results[0].skill_score }}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- KEYWORD COVERAGE -->
+
+                            <div>
+
+                                <div class="break-row">
+
+                                    <span class="break-label">
+                                        Keyword Coverage
+                                    </span>
+
+                                    <span class="break-value">
+                                        {{ results[0].keyword_score }}%
+                                    </span>
+
+                                </div>
+
+
+                                <div class="progress">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: {{ results[0].keyword_score }}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- SKILL RELEVANCE -->
+
+                            <div>
+
+                                <div class="break-row">
+
+                                    <span class="break-label">
+                                        Skill Relevance
+                                    </span>
+
+                                    <span class="break-value">
+                                        {{ results[0].relevance_score }}%
+                                    </span>
+
+                                </div>
+
+
+                                <div class="progress">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: {{ results[0].relevance_score }}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- FINAL SCORE -->
+
+                            <div>
+
+                                <div class="break-row">
+
+                                    <span class="break-label">
+                                        Final Score
+                                    </span>
+
+                                    <span class="break-value">
+                                        {{ results[0].final_score }}%
+                                    </span>
+
+                                </div>
+
+
+                                <div class="progress">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: {{ results[0].final_score }}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AI RECOMMENDATION -->
+
+                <div class="panel recommendation-panel">
+
+                    <span class="panel-kicker">
+                        AI RECOMMENDATION
+                    </span>
+
+
+                    <div class="recommendation-icon">
+                        &#10022;
+                    </div>
+
+
+                    <h3>
+                        {{ results[0].recommendation }}
+                    </h3>
+
+
+                    <p>
+                        {{ results[0].recommendation_message }}
+                    </p>
+
+
+                    <div class="recommendation-status">
+                        {{ results[0].recommendation }}
+                    </div>
+
+
+                    <p class="recommendation-message">
+
+                        Candidate ranked #1 with an overall AI score of
+                        {{ results[0].final_score }}%.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 JOB DESCRIPTION ANALYSIS
+            ========================= -->
+
+            <div class="panel jd-analysis-panel">
+
+                <div class="jd-analysis-header">
+
+                    <div>
+                        <div class="jd-analysis-title">
+                            Job Description Analysis
+                        </div>
+
+                        <div class="jd-analysis-subtitle">
+                            Skills and important keywords detected automatically from the job description.
+                        </div>
+                    </div>
+
+                    <div class="jd-analysis-stats">
+                        <span class="jd-stat">
+                            {{ jd_analysis.skill_count }} Skills Detected
+                        </span>
+
+                        <span class="jd-stat">
+                            {{ jd_analysis.keyword_count }} Keywords Detected
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="jd-analysis-grid">
+
+                    <div class="jd-analysis-card">
+
+                        <div class="jd-analysis-card-title">
+                            Detected Skills
+                        </div>
+
+                        {% if jd_analysis.skills %}
+                        <div class="jd-tag-list">
+                            {% for skill in jd_analysis.skills %}
+                                <span class="jd-tag">
+                                    {{ skill }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                            <div class="jd-empty">
+                                No known technical skills detected.
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="jd-analysis-card">
+
+                        <div class="jd-analysis-card-title">
+                            Important Keywords
+                        </div>
+
+                        {% if jd_analysis.keywords %}
+                        <div class="jd-tag-list">
+                            {% for keyword in jd_analysis.keywords %}
+                                <span class="jd-tag keyword">
+                                    {{ keyword }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                            <div class="jd-empty">
+                                No additional keywords detected.
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+
+            <!-- =========================
+                 SKILL GAP ANALYSIS
+            ========================= -->
+
+            <div class="panel skill-gap-panel">
+
+                <div class="skill-gap-header">
+
+                    <div>
+                        <div class="skill-gap-title">
+                            Resume Skill Gap Analysis
+                        </div>
+
+                        <div class="skill-gap-subtitle">
+                            Requirements from the job description that the top-ranked resume does not fully match.
+                        </div>
+                    </div>
+
+                    <div class="skill-gap-candidate" title="{{ results[0].filename }}">
+                        Top Candidate: {{ results[0].filename }}
+                    </div>
+
+                </div>
+
+                <div class="skill-gap-grid">
+
+                    <div class="skill-gap-card">
+
+                        <div class="skill-gap-card-title">
+                            Missing Skills ({{ results[0].missing|length }})
+                        </div>
+
+                        {% if results[0].missing %}
+                        <div class="skill-gap-list">
+                            {% for skill in results[0].missing %}
+                                <span class="gap-tag">
+                                    {{ skill }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                            <p class="skill-gap-success">
+                                No missing required skills detected for the top-ranked candidate.
+                            </p>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="skill-gap-card">
+
+                        <div class="skill-gap-card-title">
+                            Partial Skills ({{ results[0].partial|length }})
+                        </div>
+
+                        {% if results[0].partial %}
+                        <div class="skill-gap-list">
+                            {% for skill in results[0].partial %}
+                                <span class="gap-tag partial">
+                                    {{ skill }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                            <p class="skill-gap-success">
+                                No partial skill matches detected.
+                            </p>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+<div class="skill-gap-card" style="margin-top: 14px;">
+
+    <div class="skill-gap-card-title">
+        Resume Improvement Suggestions
+    </div>
+
+    {% if results[0].missing %}
+        <p class="skill-gap-suggestion">
+            &bull; Focus areas:
+            <strong>{{ results[0].missing | join(", ") }}</strong>
+        </p>
+
+        <p class="skill-gap-suggestion">
+            &bull; Add a missing skill to the resume only if you have actually
+            used it in a project, internship, coursework, or practical work.
+        </p>
+    {% endif %}
+
+    {% if results[0].partial %}
+        <p class="skill-gap-suggestion">
+            &bull; Skills that need stronger evidence:
+            <strong>{{ results[0].partial | join(", ") }}</strong>
+        </p>
+
+        <p class="skill-gap-suggestion">
+            &bull; If applicable, mention the specific project, task, or technology
+            where these skills were used.
+        </p>
+    {% endif %}
+
+    {% if not results[0].missing and not results[0].partial %}
+        <p class="skill-gap-success">
+            &#10003; No major skill gaps detected. Keep the existing skills supported
+            with relevant project or experience details.
+        </p>
+    {% endif %}
+
+    <p class="skill-gap-suggestion">
+        &bull; Keep resume wording aligned with the job description, but avoid
+        adding skills or experience that cannot be substantiated.
+    </p>
+
+</div>
+
+            <!-- =========================
+                 RESUME ANALYTICS
+            ========================= -->
+
+            {% set strong_count = results | selectattr('recommendation', 'equalto', 'Strong Match') | list | length %}
+            {% set good_count = results | selectattr('recommendation', 'equalto', 'Good Match') | list | length %}
+            {% set moderate_count = results | selectattr('recommendation', 'equalto', 'Moderate Match') | list | length %}
+            {% set low_count = results | selectattr('recommendation', 'equalto', 'Low Match') | list | length %}
+            {% set score_80 = results | selectattr('final_score', 'ge', 80) | list | length %}
+            {% set score_65 = results | selectattr('final_score', 'ge', 65) | selectattr('final_score', 'lt', 80) | list | length %}
+            {% set score_50 = results | selectattr('final_score', 'ge', 50) | selectattr('final_score', 'lt', 65) | list | length %}
+            {% set score_below_50 = results | selectattr('final_score', 'lt', 50) | list | length %}
+            {% set total_score = results | sum(attribute='final_score') %}
+            {% set average_score = (total_score / (results | length)) if results | length else 0 %}
+            {% set max_score = results[0].final_score if results else 0 %}
+            {% set min_score = results[-1].final_score if results else 0 %}
+            {% set total_candidates = results | length %}
+
+            <div class="panel analytics-panel">
+
+                <div class="analytics-header">
+                    <div>
+                        <div class="analytics-title">Resume Analytics</div>
+                        <div class="analytics-subtitle">Overview of the current candidate screening results.</div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-label">Candidates Analyzed</div>
+                        <div class="analytics-stat-value">{{ total_candidates }}</div>
+                    </div>
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-label">Average ATS Score</div>
+                        <div class="analytics-stat-value">{{ '%.2f'|format(average_score) }}<small>%</small></div>
+                    </div>
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-label">Highest Score</div>
+                        <div class="analytics-stat-value">{{ max_score }}<small>%</small></div>
+                    </div>
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-label">Lowest Score</div>
+                        <div class="analytics-stat-value">{{ min_score }}<small>%</small></div>
+                    </div>
+
+                </div>
+
+                <div class="analytics-detail-grid">
+
+                    <div class="analytics-card">
+                        <div class="analytics-card-title">Recommendation Breakdown</div>
+
+                        {% set max_recommendation = [strong_count, good_count, moderate_count, low_count, 1] | max %}
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">Strong Match</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (strong_count / max_recommendation * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ strong_count }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">Good Match</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (good_count / max_recommendation * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ good_count }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">Moderate Match</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (moderate_count / max_recommendation * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ moderate_count }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row" style="margin-bottom: 0;">
+                            <div class="analytics-bar-label">Low Match</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (low_count / max_recommendation * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ low_count }}</div>
+                        </div>
+
+                    </div>
+
+                    <div class="analytics-card">
+                        <div class="analytics-card-title">Score Distribution</div>
+
+                        {% set max_score_bucket = [score_80, score_65, score_50, score_below_50, 1] | max %}
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">80% and above</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (score_80 / max_score_bucket * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ score_80 }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">65&ndash;79.99%</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (score_65 / max_score_bucket * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ score_65 }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row">
+                            <div class="analytics-bar-label">50&ndash;64.99%</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (score_50 / max_score_bucket * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ score_50 }}</div>
+                        </div>
+
+                        <div class="analytics-bar-row" style="margin-bottom: 0;">
+                            <div class="analytics-bar-label">Below 50%</div>
+                            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width: {{ (score_below_50 / max_score_bucket * 100) }}%;"></div></div>
+                            <div class="analytics-bar-count">{{ score_below_50 }}</div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 REPORTS
+            ========================= -->
+
+            <div id="reports" style="position: relative; top: -20px;"></div>
+
+
+            <!-- =========================
+                 RANKING
+            ========================= -->
+
+            <div
+                class="panel ranking-panel"
+                id="ranking"
+            >
+
+
+                <div class="table-header">
+
+
+                    <div class="table-title">
+                        Candidate Ranking
+                    </div>
+
+
+                    <!-- DOWNLOAD BUTTONS -->
+
+                    <div class="table-header-right">
+
+
+                        <div class="table-badge">
+                            AI Ranked
+                        </div>
+
+
+                        <a
+                            href="/download_csv"
+                            class="report-btn csv"
+                            title="Download ranking as CSV"
+                        >
+                            &#8595; CSV
+                        </a>
+
+
+                        <a
+                            href="/download_pdf"
+                            class="report-btn pdf"
+                            title="Download ranking as PDF"
+                        >
+                            &#8595; PDF
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <div class="candidate-filters">
+
+                    <input
+                        type="text"
+                        id="candidateSearch"
+                        class="candidate-search"
+                        placeholder="&#128269; Search candidate name..."
+                        aria-label="Search candidates"
+                    >
+
+                    <select
+                        id="matchFilter"
+                        class="candidate-filter"
+                        aria-label="Filter by recommendation"
+                    >
+                        <option value="all">All Recommendations</option>
+                        <option value="Strong Match">Strong Match</option>
+                        <option value="Good Match">Good Match</option>
+                        <option value="Moderate Match">Moderate Match</option>
+                        <option value="Low Match">Low Match</option>
+                    </select>
+
+                    <select
+                        id="scoreFilter"
+                        class="candidate-filter"
+                        aria-label="Filter by score"
+                    >
+                        <option value="all">All Scores</option>
+                        <option value="80">80% and above</option>
+                        <option value="65">65% &ndash; 79.99%</option>
+                        <option value="50">50% &ndash; 64.99%</option>
+                        <option value="0">Below 50%</option>
+                    </select>
+
+                    <span
+                        class="candidate-count"
+                        id="candidateCount"
+                    >
+                        Showing all candidates
+                    </span>
+
+                </div>
+
+
+<!-- =========================
+     CANDIDATE COMPARISON
+========================= -->
+
+<div class="candidate-comparison-selector">
+
+    <div class="comparison-selector-header">
+
+        <div>
+            <div class="comparison-title">
+                Compare Candidates
+            </div>
+
+            <div class="comparison-subtitle">
+                Select up to 3 candidates for side-by-side comparison
+            </div>
+        </div>
+
+        <span
+            id="comparisonCount"
+            class="comparison-count"
+        >
+            0 / 3 selected
+        </span>
+
+    </div>
+
+
+    <!-- CANDIDATE SELECTION -->
+
+    <div
+        id="comparisonCandidates"
+        class="comparison-candidates"
+    >
+
+        {% for candidate in results %}
+
+        <label class="comparison-option">
+
+            <input
+                type="checkbox"
+                class="comparison-checkbox"
+                value="{{ loop.index0 }}"
+                onchange="updateCandidateComparison()"
+            >
+
+            <span class="comparison-option-content">
+
+                <span class="comparison-option-rank">
+                    #{{ candidate.rank }}
+                </span>
+
+                <span class="comparison-option-identity">
+                    <span class="comparison-option-name">
+                        {{ candidate.name or candidate.filename }}
+                    </span>
+
+                    {% if candidate.email %}
+                    <span class="comparison-option-email">
+                        {{ candidate.email }}
+                    </span>
+                    {% endif %}
+                </span>
+
+                <span class="comparison-option-score">
+                    {{ candidate.final_score }}%
+                </span>
+
+            </span>
+
+        </label>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- COMPARE BUTTON -->
+
+    <button
+        type="button"
+        id="compareCandidatesBtn"
+        class="compare-candidates-btn"
+        onclick="compareSelectedCandidates()"
+        disabled
+    >
+        Compare Selected
+    </button>
+
+</div>
+
+
+<!-- =========================
+     CANDIDATE COMPARISON PANEL
+========================= -->
+
+<div
+    id="candidateComparisonPanel"
+    class="candidate-comparison-panel"
+    style="display: none;"
+>
+
+    <div class="comparison-panel-header">
+
+        <div>
+
+            <div class="comparison-panel-title">
+                Candidate Comparison
+            </div>
+
+            <div class="comparison-panel-subtitle">
+                Side-by-side ATS comparison of selected candidates
+            </div>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="comparison-close-btn"
+            onclick="closeCandidateComparison()"
+        >
+            &times; Close
+        </button>
+
+    </div>
+
+
+    <!-- DYNAMIC COMPARISON CONTENT -->
+
+    <div
+        id="comparisonTableContainer"
+        class="comparison-table-container"
+    >
+    </div>
+
+</div>
+
+
+<div class="table-wrap">
+ 
+
+                    <table>
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Rank
+                                </th>
+
+                                <th>
+                                    Candidate
+                                </th>
+
+                                <th>
+                                    JD Similarity
+                                </th>
+
+                                <th>
+                                    Skill Match
+                                </th>
+
+                                <th>
+                                    Keyword Coverage
+                                </th>
+
+                                <th>
+                                    Skill Relevance
+                                </th>
+
+                                <th>
+                                    Overall Score
+                                </th>
+
+                                <th>
+                                    Recommendation
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            {% for candidate in results %}
+
+
+                            <tr
+                                class="candidate-row"
+                                data-candidate-index="{{ loop.index0 }}"
+                                onclick="openCandidateDetails({{ loop.index0 }})"
+                                title="Click to view candidate details"
+                            >
+
+
+                                <td>
+
+                                    <span class="rank-number">
+                                        #{{ candidate.rank }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="resume-name">
+                                        {{ candidate.name or candidate.filename }}
+                                    </div>
+
+                                    {% if candidate.email %}
+                                    <div class="resume-email">
+                                        {{ candidate.email }}
+                                    </div>
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+                                    {{ candidate.similarity }}%
+                                </td>
+
+
+                                <td>
+                                    {{ candidate.skill_score }}%
+                                </td>
+
+
+                                <td>
+                                    {{ candidate.keyword_score }}%
+                                </td>
+
+
+                                <td>
+                                    {{ candidate.relevance_score }}%
+                                </td>
+
+
+                                <td>
+
+                                    <span class="score-pill">
+                                        {{ candidate.final_score }}%
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+
+                                    {% if candidate.recommendation == "Strong Match" %}
+
+                                    <span class="match-pill match-strong">
+                                        Strong Match
+                                    </span>
+
+
+                                    {% elif candidate.recommendation == "Good Match" %}
+
+                                    <span class="match-pill match-good">
+                                        Good Match
+                                    </span>
+
+
+                                    {% elif candidate.recommendation == "Moderate Match" %}
+
+                                    <span class="match-pill match-moderate">
+                                        Moderate Match
+                                    </span>
+
+
+                                    {% else %}
+
+                                    <span class="match-pill match-weak">
+                                        {{ candidate.recommendation }}
+                                    </span>
+
+                                    {% endif %}
+
+
+                                </td>
+
+                            </tr>
+
+
+                            {% endfor %}
+
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 SKILL ANALYSIS
+            ========================= -->
+
+            <div
+                class="skill-grid"
+                id="skills"
+            >
+
+
+                <!-- MATCHED -->
+
+                <div class="panel">
+
+
+                    <div class="skill-section-title">
+                        Matched Skills &mdash; Top Candidate
+                    </div>
+
+
+                    <div class="skill-tags">
+
+
+                        {% if results[0].matched %}
+
+
+                            {% for skill in results[0].matched %}
+
+                            <span class="skill-tag matched">
+                                &#10003; {{ skill }}
+                            </span>
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+                            <span class="skill-tag">
+                                No matched skills detected
+                            </span>
+
+                        {% endif %}
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- PARTIAL -->
+
+                <div class="panel">
+
+
+                    <div class="skill-section-title">
+                        Partial Skills &mdash; Top Candidate
+                    </div>
+
+
+                    <div class="skill-tags">
+
+
+                        {% if results[0].partial %}
+
+
+                            {% for skill in results[0].partial %}
+
+                            <span class="skill-tag partial">
+                                ~ {{ skill }}
+                            </span>
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+                            <span class="skill-tag">
+                                No partial skills detected
+                            </span>
+
+                        {% endif %}
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- MISSING -->
+
+                <div class="panel">
+
+
+                    <div class="skill-section-title">
+                        Missing Skills &mdash; Top Candidate
+                    </div>
+
+
+                    <div class="skill-tags">
+
+
+                        {% if results[0].missing %}
+
+
+                            {% for skill in results[0].missing %}
+
+                            <span class="skill-tag missing">
+                                &times; {{ skill }}
+                            </span>
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+                            <span class="skill-tag matched">
+                                &#10003; All required skills detected
+                            </span>
+
+                        {% endif %}
+
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        <!-- =========================
+             CANDIDATE DETAILS MODAL
+        ========================= -->
+
+        <div
+            id="candidateModal"
+            class="candidate-modal"
+            onclick="handleModalBackdrop(event)"
+        >
+
+            <div class="candidate-modal-box">
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    onclick="closeCandidateDetails()"
+                    aria-label="Close candidate details"
+                >
+                    &times;
+                </button>
+
+                <div class="modal-kicker">
+                    CANDIDATE DETAILS
+                </div>
+
+                <h2
+                    id="modalCandidateName"
+                    class="modal-candidate-name"
+                >
+                    Candidate
+                </h2>
+
+                <div
+                    id="modalCandidateRank"
+                    class="modal-candidate-rank"
+                >
+                    Candidate
+                </div>
+
+                <div class="modal-score-grid">
+
+                    <div class="panel modal-score-card">
+                        <div class="modal-score-label">
+                            JD Similarity
+                        </div>
+                        <strong
+                            id="modalSimilarity"
+                            class="modal-score-value"
+                        >
+                            0%
+                        </strong>
+                    </div>
+
+                    <div class="panel modal-score-card">
+                        <div class="modal-score-label">
+                            Skill Match
+                        </div>
+                        <strong
+                            id="modalSkillScore"
+                            class="modal-score-value"
+                        >
+                            0%
+                        </strong>
+                    </div>
+
+                    <div class="panel modal-score-card">
+                        <div class="modal-score-label">
+                            Keyword Coverage
+                        </div>
+                        <strong
+                            id="modalKeywordScore"
+                            class="modal-score-value"
+                        >
+                            0%
+                        </strong>
+                    </div>
+
+                    <div class="panel modal-score-card">
+                        <div class="modal-score-label">
+                            Skill Relevance
+                        </div>
+                        <strong
+                            id="modalRelevanceScore"
+                            class="modal-score-value"
+                        >
+                            0%
+                        </strong>
+                    </div>
+
+                    <div class="panel modal-score-card modal-final-card">
+                        <div class="modal-score-label">
+                            Overall Score
+                        </div>
+                        <strong
+                            id="modalFinalScore"
+                            class="modal-score-value"
+                        >
+                            0%
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="panel modal-recommendation">
+
+                    <div class="modal-recommendation-label">
+                        AI RECOMMENDATION
+                    </div>
+
+                    <div
+                        id="modalRecommendation"
+                        class="modal-recommendation-value"
+                    >
+                        Good Match
+                    </div>
+
+                    <div
+                        id="modalRecommendationMessage"
+                        class="modal-recommendation-message"
+                    ></div>
+
+                </div>
+
+    <!-- =========================
+     SCORE BREAKDOWN
+========================= -->
+
+<div class="panel modal-score-breakdown">
+
+    <div class="modal-skill-title">
+        Score Breakdown
+    </div>
+
+    <div class="score-breakdown-list">
+
+        <div class="score-breakdown-row">
+
+            <div class="score-breakdown-info">
+                <span>JD Similarity</span>
+                <small>Weight: 40%</small>
+
+                <div class="score-breakdown-bar">
+                    <div
+                        id="modalSimilarityBar"
+                        class="score-breakdown-fill"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="score-breakdown-value">
+                <span id="modalSimilarityContribution">0</span>
+                <small>points</small>
+            </div>
+
+        </div>
+
+
+        <div class="score-breakdown-row">
+
+            <div class="score-breakdown-info">
+                <span>Skill Match</span>
+                <small>Weight: 35%</small>
+
+                <div class="score-breakdown-bar">
+                    <div
+                        id="modalSkillBar"
+                        class="score-breakdown-fill"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="score-breakdown-value">
+                <span id="modalSkillContribution">0</span>
+                <small>points</small>
+            </div>
+
+        </div>
+
+
+        <div class="score-breakdown-row">
+
+            <div class="score-breakdown-info">
+                <span>Keyword Coverage</span>
+                <small>Weight: 15%</small>
+
+                <div class="score-breakdown-bar">
+                    <div
+                        id="modalKeywordBar"
+                        class="score-breakdown-fill"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="score-breakdown-value">
+                <span id="modalKeywordContribution">0</span>
+                <small>points</small>
+            </div>
+
+        </div>
+
+
+        <div class="score-breakdown-row">
+
+            <div class="score-breakdown-info">
+                <span>Skill Relevance</span>
+                <small>Weight: 10%</small>
+
+                <div class="score-breakdown-bar">
+                    <div
+                        id="modalRelevanceBar"
+                        class="score-breakdown-fill"
+                    ></div>
+                </div>
+            </div>
+
+            <div class="score-breakdown-value">
+                <span id="modalRelevanceContribution">0</span>
+                <small>points</small>
+            </div>
+
+        </div>
+
+
+        <div class="score-breakdown-total">
+
+            <div>
+                <span>Final Score</span>
+                <small>Total contribution</small>
+            </div>
+
+            <strong id="modalBreakdownFinalScore">
+                0%
+            </strong>
+
+        </div>
+
+    </div>
+
+</div>
+
+                 <div class="modal-skills-grid">
+
+                    <div class="panel modal-skill-card">
+                        <div class="modal-skill-title">
+                            Matched Skills
+                        </div>
+                        <div
+                            id="modalMatchedSkills"
+                            class="skill-tags"
+                        ></div>
+                    </div>
+
+           <div class="panel modal-skill-card">
+                        <div class="modal-skill-title">
+                            Partial Skills
+                        </div>
+                        <div
+                            id="modalPartialSkills"
+                            class="skill-tags"
+                        ></div>
+                    </div>
+
+                    <div class="panel modal-skill-card">
+                        <div class="modal-skill-title">
+                            Missing Skills
+                        </div>
+                        <div
+                            id="modalMissingSkills"
+                            class="skill-tags"
+                        ></div>
+                    </div>
+
+                </div>
+
+
+                <!-- =========================
+                     RESUME IMPROVEMENT
+                ========================= -->
+
+                <div class="panel modal-improvement-card">
+
+                    <div class="modal-skill-title">
+                        Resume Improvement Suggestions
+                    </div>
+
+                    <div id="modalImprovementSuggestions">
+
+                        <p class="modal-improvement-text">
+                            Review the candidate's skill gaps and strengthen
+                            the resume with relevant project or practical
+                            experience.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+        </section>
+
+
+        {% else %}
+
+
+        <!-- =========================
+             EMPTY STATE
+        ========================= -->
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                &#10022;
+            </div>
+
+
+            <h3>
+                Ready to analyze candidates
+            </h3>
+
+
+            <p>
+                Upload resumes and enter a job description to generate
+                AI-powered candidate rankings.
+            </p>
+
+        </div>
+
+
+        {% endif %}
+
+
+        <footer>
+            ResumeAI &middot; AI-Powered Resume Ranking System
+        </footer>
+
+
+    </div>
+
+</main>
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
+<script>
+
+    /* =========================
+       FILE SELECTION
+    ========================= */
+
+    const resumeInput =
+        document.getElementById("resumeInput");
+
+    const fileName =
+        document.getElementById("fileName");
+
+    let selectedFiles = new DataTransfer();
+
+
+    function updateFileDisplay() {
+
+        if (!fileName) return;
+
+        const files = selectedFiles.files;
+
+        if (files.length === 0) {
+
+            fileName.textContent =
+                "No files selected";
+
+            return;
+        }
+
+        fileName.textContent =
+            files.length +
+            " PDF resume" +
+            (files.length > 1 ? "s" : "") +
+            " selected";
+
+    }
+
+
+    if (resumeInput) {
+
+        resumeInput.addEventListener(
+            "change",
+            function () {
+
+                const newFiles = this.files;
+
+                for (
+                    let i = 0;
+                    i < newFiles.length;
+                    i++
+                ) {
+
+                    const file = newFiles[i];
+
+                    if (
+                        file.type === "application/pdf" ||
+                        file.name.toLowerCase().endsWith(".pdf")
+                    ) {
+
+                        selectedFiles.items.add(file);
+
+                    }
+
+                }
+
+                resumeInput.files =
+                    selectedFiles.files;
+
+                updateFileDisplay();
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       FORM SUBMISSION
+    ========================= */
+
+    const form =
+        document.getElementById("rankForm");
+
+    const analyzeButton =
+        document.getElementById("analyzeButton");
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            function () {
+
+                /*
+                 * Make sure ALL selected files
+                 * are submitted to Flask.
+                 */
+
+                resumeInput.files =
+                    selectedFiles.files;
+
+
+                if (
+                    !resumeInput.files ||
+                    resumeInput.files.length === 0
+                ) {
+
+                    alert(
+                        "Please select at least one PDF resume."
+                    );
+
+                    return;
+
+                }
+
+
+                if (analyzeButton) {
+
+                    analyzeButton.disabled =
+                        true;
+
+                    analyzeButton.innerHTML =
+                        "&#10227; Analyzing Candidates...";
+
+                    analyzeButton.style.opacity =
+                        "0.75";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       DRAG & DROP
+    ========================= */
+
+    const uploadBox =
+        document.querySelector(".upload-box");
+
+
+    if (uploadBox && resumeInput) {
+
+        uploadBox.addEventListener(
+            "dragover",
+            function (event) {
+
+                event.preventDefault();
+
+                uploadBox.style.borderColor =
+                    "rgba(139,92,246,0.9)";
+
+            }
+        );
+
+
+        uploadBox.addEventListener(
+            "dragleave",
+            function () {
+
+                uploadBox.style.borderColor =
+                    "rgba(139,92,246,0.40)";
+
+            }
+        );
+
+
+        uploadBox.addEventListener(
+            "drop",
+            function (event) {
+
+                event.preventDefault();
+
+                const droppedFiles =
+                    event.dataTransfer.files;
+
+
+                for (
+                    let i = 0;
+                    i < droppedFiles.length;
+                    i++
+                ) {
+
+                    const file =
+                        droppedFiles[i];
+
+
+                    if (
+                        file.type === "application/pdf" ||
+                        file.name.toLowerCase().endsWith(".pdf")
+                    ) {
+
+                        selectedFiles.items.add(file);
+
+                    }
+
+                }
+
+
+                resumeInput.files =
+                    selectedFiles.files;
+
+                updateFileDisplay();
+
+
+                uploadBox.style.borderColor =
+                    "rgba(139,92,246,0.40)";
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       NAVIGATION
+    ========================= */
+
+    const navItems =
+        document.querySelectorAll(".nav-item");
+
+    const navSections = [];
+
+    navItems.forEach(
+        function (item) {
+
+            const targetId =
+                item.getAttribute("href");
+
+            if (!targetId || targetId === "#") {
+                return;
+            }
+
+            const section =
+                document.querySelector(targetId);
+
+            if (!section) {
+                return;
+            }
+
+            navSections.push({
+                item: item,
+                section: section
+            });
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    navItems.forEach(
+                        function (nav) {
+                            nav.classList.remove("active");
+                        }
+                    );
+
+                    this.classList.add("active");
+
+                }
+            );
+
+        }
+    );
+
+    const navObserver =
+        new IntersectionObserver(
+            function (entries) {
+
+                entries.forEach(
+                    function (entry) {
+
+                        if (!entry.isIntersecting) {
+                            return;
+                        }
+
+                        navItems.forEach(
+                            function (nav) {
+                                nav.classList.remove("active");
+                            }
+                        );
+
+                        const match =
+                            navSections.find(
+                                function (item) {
+                                    return item.section === entry.target;
+                                }
+                            );
+
+                        if (match) {
+                            match.item.classList.add("active");
+                        }
+
+                    }
+                );
+
+            },
+            {
+                root: null,
+                rootMargin: "-20% 0px -65% 0px",
+                threshold: 0
+            }
+        );
+
+    navSections.forEach(
+        function (item) {
+            navObserver.observe(item.section);
+        }
+    );
+
+
+    /* =========================
+       CANDIDATE SEARCH & FILTERS
+    ========================= */
+
+    const candidateSearch =
+        document.getElementById("candidateSearch");
+
+    const matchFilter =
+        document.getElementById("matchFilter");
+
+    const scoreFilter =
+        document.getElementById("scoreFilter");
+
+    const candidateCount =
+        document.getElementById("candidateCount");
+
+
+    function applyCandidateFilters() {
+
+        const rows =
+            document.querySelectorAll(".candidate-row");
+
+        const searchValue =
+            candidateSearch
+                ? candidateSearch.value.trim().toLowerCase()
+                : "";
+
+        const matchValue =
+            matchFilter
+                ? matchFilter.value
+                : "all";
+
+        const scoreValue =
+            scoreFilter
+                ? scoreFilter.value
+                : "all";
+
+        let visibleCount = 0;
+
+        rows.forEach(function (row) {
+
+            const index =
+                Number(row.dataset.candidateIndex);
+
+            const candidate =
+                candidateData[index];
+
+            if (!candidate) {
+                row.classList.add("hidden-row");
+                return;
+            }
+
+            const candidateName =
+                String(candidate.name || "").toLowerCase();
+
+            const candidateEmail =
+                String(candidate.email || "").toLowerCase();
+
+            const candidateFilename =
+                String(candidate.filename || "").toLowerCase();
+
+            const candidateSkills = [
+                ...(candidate.matched || []),
+                ...(candidate.partial || []),
+                ...(candidate.missing || [])
+            ]
+                .map(function (skill) {
+                    return String(skill || "").toLowerCase();
+                })
+                .join(" ");
+
+            const searchableCandidateText =
+                [
+                    candidateName,
+                    candidateEmail,
+                    candidateFilename,
+                    candidateSkills
+                ].join(" ");
+
+            const recommendation =
+                String(candidate.recommendation || "");
+
+            const finalScore =
+                Number(candidate.final_score || 0);
+
+            const matchesSearch =
+                !searchValue ||
+                searchableCandidateText.includes(searchValue);
+
+            const matchesRecommendation =
+                matchValue === "all" ||
+                recommendation === matchValue;
+
+            let matchesScore = true;
+
+            if (scoreValue !== "all") {
+
+                const minimum =
+                    Number(scoreValue);
+
+                if (minimum === 80) {
+                    matchesScore = finalScore >= 80;
+                }
+                else if (minimum === 65) {
+                    matchesScore =
+                        finalScore >= 65 &&
+                        finalScore < 80;
+                }
+                else if (minimum === 50) {
+                    matchesScore =
+                        finalScore >= 50 &&
+                        finalScore < 65;
+                }
+                else if (minimum === 0) {
+                    matchesScore = finalScore < 50;
+                }
+
+            }
+
+            const visible =
+                matchesSearch &&
+                matchesRecommendation &&
+                matchesScore;
+
+            row.classList.toggle(
+                "hidden-row",
+                !visible
+            );
+
+            if (visible) {
+                visibleCount++;
+            }
+
+        });
+
+
+        if (candidateCount) {
+
+            const total =
+                rows.length;
+
+            candidateCount.textContent =
+                "Showing " +
+                visibleCount +
+                " of " +
+                total +
+                " candidates";
+
+        }
+
+    }
+
+
+    if (candidateSearch) {
+        candidateSearch.addEventListener(
+            "input",
+            applyCandidateFilters
+        );
+    }
+
+
+    if (matchFilter) {
+        matchFilter.addEventListener(
+            "change",
+            applyCandidateFilters
+        );
+    }
+
+
+    if (scoreFilter) {
+        scoreFilter.addEventListener(
+            "change",
+            applyCandidateFilters
+        );
+    }
+
+
+/* =========================
+   CANDIDATE DETAILS
+========================= */
+
+const candidateData =
+    {{ (results or []) | tojson }};
+
+
+// =====================================================
+// CANDIDATE COMPARISON
+// =====================================================
+
+function updateCandidateComparison() {
+
+    const checkboxes =
+        document.querySelectorAll(".comparison-checkbox");
+
+    let selected =
+        Array.from(checkboxes).filter(function (checkbox) {
+            return checkbox.checked;
+        });
+
+    const count =
+        document.getElementById("comparisonCount");
+
+    const button =
+        document.getElementById("compareCandidatesBtn");
+
+
+    // Maximum 3 candidates
+    if (selected.length > 3) {
+
+        selected[selected.length - 1].checked = false;
+
+        selected =
+            Array.from(checkboxes).filter(function (checkbox) {
+                return checkbox.checked;
+            });
+    }
+
+
+    // Update count
+    if (count) {
+
+        count.textContent =
+            selected.length + " / 3 selected";
+    }
+
+
+    // Enable / disable compare button
+    if (button) {
+
+        button.disabled =
+            selected.length === 0;
+    }
+
+
+    // Disable remaining candidates after 3 selections
+    if (selected.length >= 3) {
+
+        checkboxes.forEach(function (checkbox) {
+
+            if (!checkbox.checked) {
+                checkbox.disabled = true;
+            }
+
+        });
+
+    } else {
+
+        checkboxes.forEach(function (checkbox) {
+
+            checkbox.disabled = false;
+
+        });
+    }
+}
+
+
+// =====================================================
+// COMPARE SELECTED CANDIDATES
+// =====================================================
+
+function compareSelectedCandidates() {
+
+    const selectedIndexes =
+        Array.from(
+            document.querySelectorAll(
+                ".comparison-checkbox:checked"
+            )
+        ).map(function (checkbox) {
+
+            return Number(checkbox.value);
+
+        });
+
+
+    if (selectedIndexes.length === 0) {
+        return;
+    }
+
+
+    const selectedCandidates =
+        selectedIndexes
+            .map(function (index) {
+
+                return candidateData[index];
+
+            })
+            .filter(function (candidate) {
+
+                return candidate;
+
+            });
+
+
+    if (selectedCandidates.length === 0) {
+        return;
+    }
+
+
+    const panel =
+        document.getElementById(
+            "candidateComparisonPanel"
+        );
+
+
+    const container =
+        document.getElementById(
+            "comparisonTableContainer"
+        );
+
+
+    if (!panel || !container) {
+
+        console.error(
+            "Candidate comparison panel not found."
+        );
+
+        return;
+    }
+
+
+    container.innerHTML =
+        buildCandidateComparisonTable(
+            selectedCandidates
+        );
+
+
+    panel.style.display = "block";
+
+
+    panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+
+// =====================================================
+// CLOSE COMPARISON
+// =====================================================
+
+function closeCandidateComparison() {
+
+    const panel =
+        document.getElementById(
+            "candidateComparisonPanel"
+        );
+
+
+    if (!panel) {
+        return;
+    }
+
+
+    panel.style.display = "none";
+}
+
+
+// =====================================================
+// BUILD COMPARISON TABLE
+// =====================================================
+
+function buildCandidateComparisonTable(
+    candidates
+) {
+
+    let html = `
+
+        <table class="comparison-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Metric
+                    </th>
+
+    `;
+
+
+    // Candidate headers
+    candidates.forEach(function (candidate) {
+
+        html += `
+
+            <th>
+
+                <div
+                    class="comparison-candidate-header"
+                >
+
+                    <span
+                        class="comparison-candidate-rank"
+                    >
+                        Rank #${candidate.rank}
+                    </span>
+
+
+                    <span
+                        class="comparison-candidate-name"
+                        title="${escapeComparisonText(
+                            candidate.name || candidate.filename
+                        )}"
+                    >
+                        ${escapeComparisonText(
+                            candidate.name || candidate.filename
+                        )}
+                    </span>
+
+                    ${
+                        candidate.email
+                            ? `<span class="comparison-candidate-email">
+                                ${escapeComparisonText(candidate.email)}
+                               </span>`
+                            : ""
+                    }
+
+
+                    <span
+                        class="comparison-candidate-recommendation"
+                    >
+                        ${escapeComparisonText(
+                            candidate.recommendation || ""
+                        )}
+                    </span>
+
+                </div>
+
+            </th>
+
+        `;
+
+    });
+
+
+    html += `
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+    `;
+
+
+    // =================================================
+    // OVERALL SCORE
+    // =================================================
+
+    html += `
+
+        <tr>
+
+            <td>
+                Overall Score
+            </td>
+
+    `;
+
+
+    candidates.forEach(function (candidate) {
+
+        const value =
+            Number(candidate.final_score || 0);
+
+
+        html += `
+
+            <td
+                class="comparison-overall-cell"
+            >
+
+                <div
+                    class="comparison-score"
+                >
+
+                    <span
+                        class="comparison-overall-score"
+                    >
+                        ${value}%
+                    </span>
+
+
+                    <div
+                        class="comparison-score-bar"
+                    >
+
+                        <div
+                            class="comparison-score-fill"
+                            style="
+                                width: ${getComparisonWidth(value)}%;
+                            "
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+        `;
+
+    });
+
+
+    html += `
+
+        </tr>
+
+    `;
+
+
+    // =================================================
+    // SCORE METRICS
+    // =================================================
+
+    html += buildComparisonScoreRow(
+        "JD Similarity",
+        candidates,
+        "similarity"
+    );
+
+
+    html += buildComparisonScoreRow(
+        "Skill Match",
+        candidates,
+        "skill_score"
+    );
+
+
+    html += buildComparisonScoreRow(
+        "Keyword Coverage",
+        candidates,
+        "keyword_score"
+    );
+
+
+    html += buildComparisonScoreRow(
+        "Skill Relevance",
+        candidates,
+        "relevance_score"
+    );
+
+
+    // =================================================
+    // SKILLS
+    // =================================================
+
+    html += buildComparisonSkillRow(
+        "Matched Skills",
+        candidates,
+        "matched",
+        "matched",
+        "\u2713"
+    );
+
+
+    html += buildComparisonSkillRow(
+        "Partial Skills",
+        candidates,
+        "partial",
+        "partial",
+        "~"
+    );
+
+
+    html += buildComparisonSkillRow(
+        "Missing Skills",
+        candidates,
+        "missing",
+        "missing",
+        "\u00D7"
+    );
+
+
+    html += `
+
+            </tbody>
+
+        </table>
+
+    `;
+
+
+    return html;
+}
+
+
+// =====================================================
+// BUILD SCORE ROW
+// =====================================================
+
+function buildComparisonScoreRow(
+    label,
+    candidates,
+    property
+) {
+
+    let html = `
+
+        <tr>
+
+            <td>
+                ${label}
+            </td>
+
+    `;
+
+
+    candidates.forEach(function (candidate) {
+
+        const value =
+            Number(candidate[property] || 0);
+
+
+        html += `
+
+            <td>
+
+                <div
+                    class="comparison-score"
+                >
+
+                    <span
+                        class="comparison-score-value"
+                    >
+                        ${value}%
+                    </span>
+
+
+                    <div
+                        class="comparison-score-bar"
+                    >
+
+                        <div
+                            class="comparison-score-fill"
+                            style="
+                                width: ${getComparisonWidth(value)}%;
+                            "
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+        `;
+
+    });
+
+
+    html += `
+
+        </tr>
+
+    `;
+
+
+    return html;
+}
+
+
+// =====================================================
+// BUILD SKILL ROW
+// =====================================================
+
+function buildComparisonSkillRow(
+    label,
+    candidates,
+    property,
+    cssClass,
+    symbol
+) {
+
+    let html = `
+
+        <tr>
+
+            <td>
+                ${label}
+            </td>
+
+    `;
+
+
+    candidates.forEach(function (candidate) {
+
+        const skills =
+            Array.isArray(candidate[property])
+                ? candidate[property]
+                : [];
+
+
+        html += `
+
+            <td>
+
+                <div
+                    class="comparison-skill-list"
+                >
+
+        `;
+
+
+        if (skills.length === 0) {
+
+            html += `
+
+                <span
+                    class="comparison-skill-tag ${cssClass}"
+                >
+                    ${symbol} None
+                </span>
+
+            `;
+
+        } else {
+
+            skills.forEach(function (skill) {
+
+                html += `
+
+                    <span
+                        class="comparison-skill-tag ${cssClass}"
+                    >
+                        ${symbol}
+                        ${escapeComparisonText(skill)}
+                    </span>
+
+                `;
+
+            });
+
+        }
+
+
+        html += `
+
+                </div>
+
+            </td>
+
+        `;
+
+    });
+
+
+    html += `
+
+        </tr>
+
+    `;
+
+
+    return html;
+}
+
+
+// =====================================================
+// COMPARISON WIDTH
+// =====================================================
+
+function getComparisonWidth(value) {
+
+    value =
+        Number(value || 0);
+
+
+    return Math.min(
+        100,
+        Math.max(0, value)
+    );
+}
+
+
+// =====================================================
+// ESCAPE TEXT
+// =====================================================
+
+function escapeComparisonText(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        String(value);
+
+
+    return div.innerHTML;
+}
+
+
+// =====================================================
+// CANDIDATE DETAILS
+// =====================================================
+
+function openCandidateDetails(index) {
+
+    const candidate =
+        candidateData[index];
+
+
+    if (!candidate) {
+        return;
+    }
+
+
+    document.getElementById(
+        "modalCandidateName"
+    ).textContent =
+        candidate.filename;
+
+
+    document.getElementById(
+        "modalCandidateRank"
+    ).textContent =
+        "Rank #" + candidate.rank;
+
+
+    document.getElementById(
+        "modalSimilarity"
+    ).textContent =
+        candidate.similarity + "%";
+
+
+    document.getElementById(
+        "modalSkillScore"
+    ).textContent =
+        candidate.skill_score + "%";
+
+
+    document.getElementById(
+        "modalKeywordScore"
+    ).textContent =
+        candidate.keyword_score + "%";
+
+
+    document.getElementById(
+        "modalRelevanceScore"
+    ).textContent =
+        candidate.relevance_score + "%";
+
+
+    document.getElementById(
+        "modalFinalScore"
+    ).textContent =
+        candidate.final_score + "%";
+
+
+    // =================================================
+    // SCORE BREAKDOWN
+    // =================================================
+
+    document.getElementById(
+        "modalSimilarityContribution"
+    ).textContent =
+        candidate.similarity_contribution || 0;
+
+
+    document.getElementById(
+        "modalSkillContribution"
+    ).textContent =
+        candidate.skill_contribution || 0;
+
+
+    document.getElementById(
+        "modalKeywordContribution"
+    ).textContent =
+        candidate.keyword_contribution || 0;
+
+
+    document.getElementById(
+        "modalRelevanceContribution"
+    ).textContent =
+        candidate.relevance_contribution || 0;
+
+
+    document.getElementById(
+        "modalBreakdownFinalScore"
+    ).textContent =
+        candidate.final_score + "%";
+
+
+    // =================================================
+    // SCORE BREAKDOWN BARS
+    // =================================================
+
+    document.getElementById(
+        "modalSimilarityBar"
+    ).style.width =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(candidate.similarity || 0)
+            )
+        ) + "%";
+
+
+    document.getElementById(
+        "modalSkillBar"
+    ).style.width =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(candidate.skill_score || 0)
+            )
+        ) + "%";
+
+
+    document.getElementById(
+        "modalKeywordBar"
+    ).style.width =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(candidate.keyword_score || 0)
+            )
+        ) + "%";
+
+
+    document.getElementById(
+        "modalRelevanceBar"
+    ).style.width =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(candidate.relevance_score || 0)
+            )
+        ) + "%";
+
+
+    // =================================================
+    // RECOMMENDATION
+    // =================================================
+
+    document.getElementById(
+        "modalRecommendation"
+    ).textContent =
+        candidate.recommendation;
+
+
+    document.getElementById(
+        "modalRecommendationMessage"
+    ).textContent =
+        candidate.recommendation_message || "";
+
+
+    // =================================================
+    // SKILLS
+    // =================================================
+
+    renderCandidateSkills(
+        "modalMatchedSkills",
+        candidate.matched,
+        "matched",
+        "\u2713"
+    );
+
+
+    renderCandidateSkills(
+        "modalPartialSkills",
+        candidate.partial,
+        "partial",
+        "~"
+    );
+
+
+    renderCandidateSkills(
+        "modalMissingSkills",
+        candidate.missing,
+        "missing",
+        "\u00D7"
+    );
+
+
+    // =================================================
+    // IMPROVEMENT SUGGESTIONS
+    // =================================================
+
+    renderImprovementSuggestions(
+        candidate
+    );
+
+
+    const modal =
+        document.getElementById(
+            "candidateModal"
+        );
+
+
+    modal.classList.add("open");
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+// =====================================================
+// RENDER CANDIDATE SKILLS
+// =====================================================
+
+function renderCandidateSkills(
+    elementId,
+    skills,
+    type,
+    symbol
+) {
+
+    const container =
+        document.getElementById(
+            elementId
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        !skills ||
+        skills.length === 0
+    ) {
+
+        const empty =
+            document.createElement("span");
+
+
+        empty.className =
+            "skill-tag";
+
+
+        empty.textContent =
+            "None detected";
+
+
+        container.appendChild(
+            empty
+        );
+
+
+        return;
+    }
+
+
+    skills.forEach(function (skill) {
+
+        const tag =
+            document.createElement("span");
+
+
+        tag.className =
+            "skill-tag " + type;
+
+
+        tag.textContent =
+            symbol + " " + skill;
+
+
+        container.appendChild(
+            tag
+        );
+
+    });
+}
+
+
+// =====================================================
+// IMPROVEMENT SUGGESTIONS
+// =====================================================
+
+function renderImprovementSuggestions(
+    candidate
+) {
+
+    const container =
+        document.getElementById(
+            "modalImprovementSuggestions"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML =
+        "";
+
+
+    const missing =
+        candidate.missing || [];
+
+
+    const partial =
+        candidate.partial || [];
+
+
+    // Missing skills
+    if (missing.length > 0) {
+
+        const focus =
+            document.createElement("p");
+
+
+        focus.className =
+            "modal-improvement-text";
+
+
+        focus.innerHTML =
+            "<strong>Focus areas:</strong> " +
+            missing.join(", ");
+
+
+        container.appendChild(
+            focus
+        );
+
+
+        const missingAdvice =
+            document.createElement("p");
+
+
+        missingAdvice.className =
+            "modal-improvement-text";
+
+
+        missingAdvice.textContent =
+            "Add these skills only if you have genuinely used them in a project, internship, coursework, or practical work.";
+
+
+        container.appendChild(
+            missingAdvice
+        );
+    }
+
+
+    // Partial skills
+    if (partial.length > 0) {
+
+        const partialFocus =
+            document.createElement("p");
+
+
+        partialFocus.className =
+            "modal-improvement-text";
+
+
+        partialFocus.innerHTML =
+            "<strong>Skills needing stronger evidence:</strong> " +
+            partial.join(", ");
+
+
+        container.appendChild(
+            partialFocus
+        );
+
+
+        const partialAdvice =
+            document.createElement("p");
+
+
+        partialAdvice.className =
+            "modal-improvement-text";
+
+
+        partialAdvice.textContent =
+            "Where applicable, mention the specific project, task, or technology that demonstrates practical use.";
+
+
+        container.appendChild(
+            partialAdvice
+        );
+    }
+
+
+    // No major gaps
+    if (
+        missing.length === 0 &&
+        partial.length === 0
+    ) {
+
+        const success =
+            document.createElement("p");
+
+
+        success.className =
+            "modal-improvement-text";
+
+
+        success.textContent =
+            "&#10003; No major skill gaps detected. Keep the existing skills supported with relevant project or practical experience.";
+
+
+        container.appendChild(
+            success
+        );
+    }
+
+
+    // General advice
+    const general =
+        document.createElement("p");
+
+
+    general.className =
+        "modal-improvement-text";
+
+
+    general.textContent =
+        "Keep resume wording aligned with the job description, but avoid adding skills or experience that cannot be substantiated.";
+
+
+    container.appendChild(
+        general
+    );
+}
+
+
+// =====================================================
+// CLOSE CANDIDATE DETAILS
+// =====================================================
+
+function closeCandidateDetails() {
+
+    const modal =
+        document.getElementById(
+            "candidateModal"
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.remove(
+        "open"
+    );
+
+
+    document.body.style.overflow =
+        "";
+}
+
+
+// =====================================================
+// MODAL BACKDROP
+// =====================================================
+
+function handleModalBackdrop(
+    event
+) {
+
+    if (
+        event.target.id ===
+        "candidateModal"
+    ) {
+
+        closeCandidateDetails();
+
+    }
+}
+
+
+// =====================================================
+// ESCAPE KEY
+// =====================================================
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        if (event.key === "Escape") {
+
+            closeCandidateDetails();
+
+            closeCandidateComparison();
+
+        }
+
+    }
+);
+
+</script>
+ 
+
+</body>
+
+ 
+
+</html>
